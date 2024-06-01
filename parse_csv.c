@@ -27,7 +27,7 @@ typedef struct
 
 
 void missing_value_case(CSV_Passangers *passengers, int *records_index, char *line);
-void missing_value_replacement(CSV_Passangers *passengers, int *records_index, int *missing_value_indicator);
+void missing_value_replacement(CSV_Passangers *passengers, int *records_index, int *missing_value_indicator, char *value_assigned);
 
 int main()
 {
@@ -57,6 +57,7 @@ int main()
         //int result_sscanf = sscanf(line,
           //         "%d, ",
             //       &passengers[records_index].passenger_id, 
+        /*
         int result_sscanf = sscanf(line,
                    "%d, %d, %d, %99[^,], %99[^,], %9[^,], %d, %d, %d, %9[^,], %lf, %9[^,], %c\n",
             //       "%d, %d, %49[^,], %49[^,], %9[^,], %d, %d, %d, %9[^,], %lf, %9[^,], %c\n",
@@ -87,11 +88,16 @@ int main()
             
             records_index_failed++;
         }
+        */
+        missing_value_case(passengers, &records_index, line);
+        records_index++;
     }
 
     fclose(file);
   
-    for (int record = 0; record < records_index; record++) {
+    //records_index = 4;
+
+    for (int record = 1; record < records_index; record++) {
         printf("%d, %d, %d, %s, %s, %s, %d, %d, %d, %s, %lf, %s, %c\n",
                 passengers->passenger_id[record], 
                 passengers->survived[record], 
@@ -126,12 +132,13 @@ void missing_value_case(CSV_Passangers *passengers, int *records_index, char *li
                           "sibsp", "parch", "ticket", "fare", 
                           "cabin", "embarked"}; 
 
-    char *data_missing_values[] = {"sqrt(-1)\n", "sqrt(-1)\n", "sqrt(-1)\n", 
-                                   "<N/A>\n", "<N/A>\n", "<N/A>\n", ", sqrt(-1)\n", 
-                                   "sqrt(-1)\n", "sqrt(-1)\n", "<N/A>\n", "sqrt(-1)\n", 
-                                   "<N/A>\n", "<N/A>\n"}; 
+   char *data_missing_values[] = {"-1", "-1", "-1", 
+                                 "<N/A>", "<N/A>", "<N/A>", "-1.0", 
+                                 //"<N/A>", "<N/A>", "<N/A>", "float(FLT_MIN)", 
+                                 "-1", "-1", "<N/A>", "-1.0", 
+                                 "<N/A>", "N"}; 
     
-    //char *data_type[] = {"%d, %d, %d, %99[^,], %99[^,], %9[^,], %d, %d, %d, %9[^,], %lf, %9[^,], %c\n"};
+   //char *data_type[] = {"%d, %d, %d, %99[^,], %99[^,], %9[^,], %d, %d, %d, %9[^,], %lf, %9[^,], %c\n"};
 
     // from https://stackoverflow.com/questions/4917030/move-cursor-x-lines-from-current-position-in-vi-vim
     char *delimiter = ",";
@@ -145,10 +152,11 @@ void missing_value_case(CSV_Passangers *passengers, int *records_index, char *li
             printf("the %s is missing, id must be remplaced by %s\n", data_types[delimiter_counter], data_missing_values[delimiter_counter]);
 
             //missing_value_replacement = 
-            missing_value_replacement(passengers, records_index, &delimiter_counter);
+            missing_value_replacement(passengers, records_index, &delimiter_counter, data_missing_values[delimiter_counter]);
         }
         else {
             printf("the %s is %s\n", data_types[delimiter_counter], separated_data);
+            missing_value_replacement(passengers, records_index, &delimiter_counter, separated_data);
         }
 
         delimiter_counter++;
@@ -157,82 +165,83 @@ void missing_value_case(CSV_Passangers *passengers, int *records_index, char *li
 
 
 
-void missing_value_replacement(CSV_Passangers *passengers, int *records_index, int *missing_value_indicator) {
+void missing_value_replacement(CSV_Passangers *passengers, int *records_index, int *missing_value_indicator, char *value_assigned) {
 
-        
+   /*     
    char *data_missing_values[] = {"sqrt(-1)\n", "sqrt(-1)\n", "sqrt(-1)\n", 
                                  "<N/A>\n", "<N/A>\n", "<N/A>\n", ", sqrt(-1)\n", 
                                  "sqrt(-1)\n", "sqrt(-1)\n", "<N/A>\n", "sqrt(-1)\n", 
                                  "<N/A>\n", "<N/A>\n"}; 
-    
+    */
+
     char *data_type[] = {"%d", "%d", "%d", "%99[^,]", "%99[^,]", "%9[^,]", "%d", "%d", "%d", "%9[^,]", "%lf", "%9[^,]", "%c\n"};
     int result_sscanf = 0;
 
     switch(*missing_value_indicator) {
         case 0:
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->passenger_id[*records_index]);
             break;
         case 1: 
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->survived[*records_index]);
             break;
         case 2:
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->pclass[*records_index]);
             break;
         case 3:
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         passengers->surname[*records_index]);
             break;
         case 4:
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         passengers->forename[*records_index]);
             break;
         case 5: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         passengers->sex[*records_index]);
             break;
         case 6: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                          data_type[*missing_value_indicator], 
                                          &passengers->age[*records_index]);
             break;
         case 7: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->sibsp[*records_index]);
             break;
         case 8: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->parch[*records_index]);
             break;
         case 9: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         passengers->ticket[*records_index]);
             break;
         case 10: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->fare[*records_index]);
             break;
         case 11: //
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         passengers->cabin[*records_index]);
             break;
         case 12: //marche pas
-            result_sscanf = sscanf(data_missing_values[*missing_value_indicator], 
+            result_sscanf = sscanf(value_assigned, 
                                         data_type[*missing_value_indicator], 
                                         &passengers->embarked[*records_index]);
-             break;              
+            break;              
     } 
 }
