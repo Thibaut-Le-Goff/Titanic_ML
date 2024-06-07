@@ -6,6 +6,10 @@
 #define NUMBER_RECORDS 1000
 #define MAX_LINE_LENGTH 1024
 
+#define LENGTH_SHORT_CHAR 10
+#define LENGTH_LONG_CHAR 100
+
+
 // from https://github.com/portfoliocourses/c-example-code/blob/main/csv_to_struct_array.c
 
 
@@ -13,6 +17,8 @@
 typedef struct 
 {
     int lines_number;
+    int columns_number;
+
     char **columns_names;
     char **columns_data_type;
     
@@ -35,10 +41,11 @@ struct Column_node
 
 Column_node *csv_to_linked_list(CSV_info *csv_raw_info);
 //Column_node *csv_to_linked_list(CSV_info *csv_raw_info, FILE *csv_raw);
-Column_node *create_column_node();
+//Column_node *create_column_node();
+Column_node *create_column_node(CSV_info *csv_raw_info, int *iterator_linked_list);
 //int free_csv_linked_list(CSV_info *csv_raw_inf, Column_node *scv_linked_list);
 int free_csv_linked_list(Column_node *scv_linked_list);
-
+char **malloc_column_char();
 
 
 Column_node *csv_to_linked_list(CSV_info *csv_raw_info) {
@@ -46,17 +53,20 @@ Column_node *csv_to_linked_list(CSV_info *csv_raw_info) {
 
     // to get the number of column
     //int size_array_data_type = sizeof(csv_raw_info->columns_data_type)/sizeof(csv_raw_info->columns_data_type[0]);
-    int size_array_data_type = sizeof(csv_raw_info->columns_data_type)/sizeof(**(csv_raw_info->columns_data_type));
-    printf("the number of column is of %d\n", size_array_data_type);
-
-    Column_node *scv_linked_list = create_column_node();
-
+    //int size_array_data_type = sizeof(csv_raw_info->columns_data_type)/sizeof(**(csv_raw_info->columns_data_type));
+    //printf("the number of column is of %d\n", size_array_data_type);
+    int iterator_data_type = 0;
+    Column_node *scv_linked_list = create_column_node(csv_raw_info, &iterator_data_type);
+    iterator_data_type++;
     // the iterator must start at because the first column has already
     // been created
     Column_node *tmp_column_node = scv_linked_list;
 
-    for (int iterator_data_type = 1; iterator_data_type < size_array_data_type; iterator_data_type++) {
-        tmp_column_node->next_column_node = create_column_node();
+    //for (int iterator_data_type = 1; iterator_data_type < size_array_data_type; iterator_data_type++) {
+for (iterator_data_type = 1; iterator_data_type < csv_raw_info->columns_number; iterator_data_type++) {
+
+        //tmp_column_node->next_column_node = create_column_node();
+        tmp_column_node->next_column_node = create_column_node(csv_raw_info, &iterator_data_type);
 
         tmp_column_node = tmp_column_node->next_column_node;
     }
@@ -66,18 +76,48 @@ Column_node *csv_to_linked_list(CSV_info *csv_raw_info) {
 
 
 
-Column_node *create_column_node() {
+Column_node *create_column_node(CSV_info *csv_raw_info, int *iterator_data_type) {
+//Column_node *create_column_node() {
+
     Column_node *new_column_node = malloc(sizeof(Column_node));
 
-    new_column_node->column_name = NULL;
+    new_column_node->column_name = csv_raw_info->columns_names[*iterator_data_type];
 
-    new_column_node->char_column_data = NULL;   
-    new_column_node->float_column_data = NULL;   
+
+    char *column_data_type = csv_raw_info->columns_data_type[*iterator_data_type];
+    int nb_lines = csv_raw_info->lines_number;
+
+    if (strcmp(column_data_type, "%f") == 0) {
+        float *float_column = malloc(sizeof(float) * nb_lines);
+        //float float_column[csv_raw_info->lines_number];
+
+        new_column_node->float_column_data = float_column;
+        new_column_node->char_column_data = NULL;
+    }
+    else if (strcmp(column_data_type, "%99[^,]") == 0) { 
+        //char *char_column[csv_raw_info->lines_number][LENGTH_LONG_CHAR];
+        char **char_column = malloc_column_char(&nb_lines);
+        
+        new_column_node->float_column_data = NULL;   
+        new_column_node->char_column_data = &char_column;
+    }
+    else if (strcmp(column_data_type, "%9[^,]") == 0) {
+        //char *char_column[csv_raw_info->lines_number][LENGTH_SHORT_CHAR];
+        char **char_column = malloc_column_char(&nb_lines);
+        
+        new_column_node->float_column_data = NULL;   
+        new_column_node->char_column_data = char_column;
+    }
+
 
     new_column_node->next_column_node = NULL;
 
-
     return new_column_node;
+}
+
+
+char **char_column = malloc_column_char(int *nb_lines) {
+    column_char = (**char)malloc(sizeof(*char) * *nb_lines);
 }
 
 
@@ -97,7 +137,7 @@ int free_csv_linked_list(Column_node *scv_linked_list) {
         // we want to free tmp
         node_to_free = tmp_column_node;
         // but we need to keep the linked list
-        // iff we don't lose it 
+        // if we don't want to lose it 
         tmp_column_node = node_to_free->next_column_node;
 
         free(node_to_free);
@@ -155,6 +195,7 @@ int main()
 
     CSV_info *csv_raw_info = malloc(sizeof(CSV_info));
     csv_raw_info->lines_number = 891;
+    csv_raw_info->columns_number = 13;
     csv_raw_info->columns_names = columns_names;
     csv_raw_info->columns_data_type = data_types;
 
